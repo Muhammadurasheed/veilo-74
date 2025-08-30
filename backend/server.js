@@ -84,6 +84,7 @@ const postRoutes = require('./routes/postRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const sanctuaryRoutes = require('./routes/sanctuaryRoutes');
 const liveSanctuaryRoutes = require('./routes/liveSanctuaryRoutes');
+const scheduledSanctuaryRoutes = require('./routes/scheduledSanctuaryRoutes');
 const sanctuaryInvitationRoutes = require('./routes/sanctuaryInvitationRoutes');
 const sanctuaryChatRoutes = require('./routes/sanctuaryChatRoutes');
 const chatRoutes = require('./routes/chatRoutes');
