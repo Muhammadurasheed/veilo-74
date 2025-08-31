@@ -555,6 +555,14 @@ const AnalyticsApi = {
 
   async getSessionAnalytics(params?: any) {
     return apiRequest('GET', '/api/analytics/sessions', null, { params });
+  },
+
+  async getGlobalMetrics() {
+    return apiRequest('GET', '/api/admin/analytics/global');
+  },
+
+  async getPlatformOverview(timeframe = '7d') {
+    return apiRequest('GET', '/api/admin/analytics/overview', null, { params: { timeframe } });
   }
 };
 
@@ -728,21 +736,6 @@ setAdminToken = (token: string) => {
     token: token.substring(0, 20) + '...', 
     hasHeader: !!api.defaults.headers.common['x-auth-token'] 
   });
-};
-
-// AnalyticsApi - missing from exports
-const AnalyticsApi = {
-  async getGlobalMetrics() {
-    return apiRequest('GET', '/api/admin/analytics/global');
-  },
-
-  async getExpertMetrics(expertId: string) {
-    return apiRequest('GET', `/api/admin/analytics/experts/${expertId}`);
-  },
-
-  async getPlatformOverview(timeframe = '7d') {
-    return apiRequest('GET', '/api/admin/analytics/overview', null, { params: { timeframe } });
-  }
 };
 
 // Export main API instances with all missing exports

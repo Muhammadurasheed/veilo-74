@@ -39,15 +39,19 @@ export interface UserCreationStateInterface {
   retryCount: number;
 }
 
-// Export UserContextType interface
+// Export UserContextType interface with all required properties
 export interface UserContextType {
   user: User | null;
   setUser: (user: User | null) => void;
   logout: () => void;
   refreshIdentity: () => void;
   createAnonymousAccount: (alias?: string, avatarIndex?: number) => Promise<boolean>;
+  createAnonymousUser: () => Promise<void>;
   creationState: UserCreationStateInterface;
   retryAccountCreation: () => Promise<boolean>;
+  userCreationAttempts: number;
+  isAuthenticated: boolean;
+  expertProfile?: any;
   isLoading: boolean;
   updateAvatar: (avatarUrl: string) => Promise<void>;
 }
@@ -67,10 +71,14 @@ const UserContext = createContext<UserContextType>({
   logout: () => {},
   refreshIdentity: () => {},
   createAnonymousAccount: async () => false,
+  createAnonymousUser: async () => {},
   isLoading: false,
   updateAvatar: async () => {},
   creationState: initialCreationState,
   retryAccountCreation: async () => false,
+  userCreationAttempts: 0,
+  isAuthenticated: false,
+  expertProfile: null,
 });
 
 // Custom hook to use the UserContext
@@ -494,11 +502,15 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       setUser, 
       logout, 
       refreshIdentity, 
-      createAnonymousAccount, 
+      createAnonymousAccount,
+      createAnonymousUser: createAnonymousAccount,
       isLoading,
       updateAvatar,
       creationState,
-      retryAccountCreation
+      retryAccountCreation,
+      userCreationAttempts: creationState.retryCount,
+      isAuthenticated: !!user?.loggedIn,
+      expertProfile: null,
     }}>
       {children}
     </UserContext.Provider>

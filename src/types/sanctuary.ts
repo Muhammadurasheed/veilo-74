@@ -108,11 +108,17 @@ export interface BreakoutRoom {
 export interface SessionRecording {
   id: string;
   sessionId: string;
+  title: string;
   filename: string;
   fileUrl: string;
   duration: number;
+  size: number;
+  recordingUrl: string;
+  transcriptUrl?: string;
   processingStatus?: 'processing' | 'completed' | 'failed';
+  status: 'processing' | 'ready' | 'failed';
   createdAt: string;
+  startTime?: string;
   downloadUrl?: string;
 }
 
@@ -174,6 +180,30 @@ export interface ModerationEvent {
   timestamp: string;
   resolved: boolean;
   action?: 'warning' | 'mute' | 'remove' | 'ban';
+}
+
+export interface SanctuaryAlert {
+  id: string;
+  sessionId: string;
+  type: 'inappropriate_content' | 'harassment' | 'spam' | 'crisis_detection' | 'technical_issue';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  message: string;
+  participantId?: string;
+  timestamp: string;
+  resolved: boolean;
+  resolvedBy?: string;
+  resolvedAt?: string;
+}
+
+export interface ModerationAction {
+  id: string;
+  sessionId: string;
+  action: 'warn' | 'mute' | 'kick' | 'ban' | 'end_session';
+  moderatorId: string;
+  targetParticipantId?: string;
+  reason: string;
+  timestamp: string;
+  duration?: number;
 }
 
 export interface ModerationSettings {
