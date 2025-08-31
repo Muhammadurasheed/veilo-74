@@ -130,21 +130,8 @@ api.interceptors.response.use(
 //   message?: string;
 // }
 
-// Token management utilities
-export const setAdminToken = (token: string) => {
-  localStorage.setItem('admin_token', token);
-  localStorage.setItem('token', token); 
-  localStorage.setItem('veilo-auth-token', token);
-  
-  // Set axios default header for all subsequent requests
-  api.defaults.headers.common['x-auth-token'] = token;
-  api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-  
-  console.log('🔐 Admin token set:', { 
-    token: token.substring(0, 20) + '...', 
-    hasHeader: !!api.defaults.headers.common['x-auth-token'] 
-  });
-};
+// Token management utilities (now implemented below)
+export let setAdminToken: (token: string) => void;
 
 // Generic API request function
 const apiRequest = async <T = any>(
@@ -174,6 +161,11 @@ const apiRequest = async <T = any>(
 
 // User API methods
 const UserApi = {
+  // Create anonymous user
+  async createAnonymousUser(userData?: { alias?: string; avatarIndex?: number; }) {
+    return apiRequest('POST', '/api/auth/anonymous', userData);
+  },
+
   // Register new user with secure identity system
   async register(userData: { 
     alias?: string; 
@@ -722,7 +714,8 @@ const AppealApi = {
   }
 };
 
-export const setAdminToken = (token: string) => {
+// Implement setAdminToken function
+setAdminToken = (token: string) => {
   localStorage.setItem('admin_token', token);
   localStorage.setItem('token', token); 
   localStorage.setItem('veilo-auth-token', token);

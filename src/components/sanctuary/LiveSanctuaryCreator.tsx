@@ -15,7 +15,7 @@ import {
   Clock,
   AlertTriangle
 } from 'lucide-react';
-import { LiveSanctuaryApi } from '@/services/api';
+import { SanctuaryApi as LiveSanctuaryApi } from '@/services/api';
 
 interface LiveSanctuaryFormData {
   topic: string;

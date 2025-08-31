@@ -102,7 +102,7 @@ export interface LiveParticipant {
   isModerator?: boolean;
   isBlocked?: boolean;
   audioLevel?: number;
-  connectionStatus: 'connected' | 'connecting' | 'disconnected';
+  connectionStatus: 'connected' | 'connecting' | 'disconnected' | 'reconnecting';
   handRaised?: boolean;
   speakingTime?: number;
   reactions?: EmojiReaction[];
@@ -116,7 +116,7 @@ export interface ChatParticipant {
   isHost: boolean;
   isAnonymous: boolean;
   joinedAt: string;
-  connectionStatus: 'connected' | 'connecting' | 'disconnected';
+  connectionStatus: 'connected' | 'connecting' | 'disconnected' | 'reconnecting';
 }
 
 export interface EmojiReaction {

@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { useAgoraAudio } from '@/hooks/useAgoraAudio';
 import { useSanctuarySocket } from '@/hooks/useSanctuarySocket';
-import { LiveSanctuaryApi } from '@/services/api';
+import { SanctuaryApi as LiveSanctuaryApi } from '@/services/api';
 import { VoiceModulationModal } from './VoiceModulationModal';
 import { SanctuaryChat } from './SanctuaryChat';
 import { EmergencyProtocols } from './EmergencyProtocols';

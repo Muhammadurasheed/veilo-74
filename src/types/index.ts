@@ -288,6 +288,7 @@ export interface SanctuarySession {
   isActive: boolean;
   allowAnonymous?: boolean;
   hostId?: string;
+  mode?: string;
 }
 
 export interface SanctuaryParticipant {
@@ -441,7 +442,7 @@ export interface CreateLiveSanctuaryRequest {
   moderationEnabled?: boolean;
   emergencyContactEnabled?: boolean;
   expireHours?: number;
-  scheduledDateTime?: string;
+  scheduledDateTime?: string | Date;
   estimatedDuration?: number;
   tags?: string[];
   language?: string;
@@ -463,7 +464,7 @@ export interface LiveSanctuarySession {
   moderationEnabled: boolean;
   emergencyContactEnabled: boolean;
   status: 'scheduled' | 'active' | 'ended';
-  scheduledDateTime?: string;
+  scheduledDateTime?: string | Date;
   startedAt?: string;
   endedAt?: string;
   estimatedDuration?: number;
@@ -484,7 +485,7 @@ export interface LiveSanctuaryParticipant {
   joinedAt: string;
   isMuted?: boolean;
   micPermission?: 'granted' | 'denied' | 'pending';
-  connectionStatus?: 'connected' | 'disconnected' | 'connecting';
+  connectionStatus?: 'connected' | 'disconnected' | 'connecting' | 'reconnecting';
 }
 
 export interface LiveSanctuaryInvitation {

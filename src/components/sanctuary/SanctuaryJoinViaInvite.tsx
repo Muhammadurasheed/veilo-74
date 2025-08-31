@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/optimized/AuthContextRefactored';
 import { toast } from '@/hooks/use-toast';
-import api from '@/services/api';
+import api, { SanctuaryApi } from '@/services/api';
 
 interface InvitationPreview {
   sessionTopic: string;
