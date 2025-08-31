@@ -22,6 +22,7 @@ interface SocketEvents {
   participant_kicked: (data: { participantId: string; kickedBy: string; timestamp: string }) => void;
   emoji_reaction: (data: { participantId: string; participantAlias: string; emoji: string; timestamp: string }) => void;
   emergency_alert: (data: { alertType: string; message: string; fromParticipant: string; timestamp: string }) => void;
+  sanctuary_new_message: (message: any) => void;
   
   // Personal events
   promoted_to_speaker: (data: { sessionId: string; promotedBy: string; timestamp: string }) => void;

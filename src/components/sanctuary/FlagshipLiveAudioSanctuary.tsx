@@ -7,10 +7,14 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { useAgoraAudio } from '@/hooks/useAgoraAudio';
 import { useSanctuarySocket } from '@/hooks/useSanctuarySocket';
+import { LiveSanctuaryApi } from '@/services/api';
+import { VoiceModulationModal } from './VoiceModulationModal';
+import { SanctuaryChat } from './SanctuaryChat';
+import { EmergencyProtocols } from './EmergencyProtocols';
 import { 
   Mic, MicOff, Volume2, VolumeX, Hand, Users, PhoneOff,
   Settings, AlertTriangle, Shield, Sparkles, Clock,
-  MessageSquare, Share2, Calendar, Star
+  MessageSquare, Share2, Calendar, Star, Crown, Zap
 } from 'lucide-react';
 import type { LiveSanctuarySession, LiveParticipant } from '@/types/sanctuary';
 
@@ -44,6 +48,10 @@ export const FlagshipLiveAudioSanctuary: React.FC = () => {
   });
   const [showChat, setShowChat] = useState(false);
   const [emergencyMode, setEmergencyMode] = useState(false);
+  const [showVoiceModal, setShowVoiceModal] = useState(false);
+  const [showEmergencyModal, setShowEmergencyModal] = useState(false);
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [handRaised, setHandRaised] = useState(false);
 
   // Agora audio hook
   const {
@@ -80,12 +88,11 @@ export const FlagshipLiveAudioSanctuary: React.FC = () => {
     
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/live-sanctuary/${sessionId}`);
-      const data = await response.json();
+      const response = await LiveSanctuaryApi.getSession(sessionId);
       
-      if (data.success) {
-        setSession(data.data.session);
-        setParticipants(data.data.session.participants || []);
+      if (response.success && response.data) {
+        setSession(response.data.session);
+        setParticipants(response.data.session.participants || []);
         setIsHost(searchParams.get('role') === 'host');
       } else {
         toast({
@@ -148,6 +155,10 @@ export const FlagshipLiveAudioSanctuary: React.FC = () => {
             ? { ...p, handRaised: data.isRaised }
             : p
         ));
+      }),
+
+      onEvent('sanctuary_new_message', (message) => {
+        setChatMessages(prev => [...prev, message]);
       })
     ];
 
@@ -167,18 +178,65 @@ export const FlagshipLiveAudioSanctuary: React.FC = () => {
     }
   };
 
-  const handleVoiceChange = (newVoice: { id: string; name: string }) => {
+  const handleVoiceChange = (newVoice: { 
+    id: string; 
+    name: string; 
+    voiceId: string; 
+    settings: any 
+  }) => {
     setVoiceModulation(prev => ({
       ...prev,
-      voiceId: newVoice.id,
+      voiceId: newVoice.voiceId,
       voiceName: newVoice.name,
-      enabled: true
+      enabled: true,
+      settings: newVoice.settings
     }));
     
     toast({
       title: "Voice Changed",
       description: `Now using ${newVoice.name} voice`,
     });
+  };
+
+  const handleToggleVoiceModulation = (enabled: boolean) => {
+    setVoiceModulation(prev => ({
+      ...prev,
+      enabled
+    }));
+  };
+
+  const handleToggleHand = () => {
+    const newState = !handRaised;
+    setHandRaised(newState);
+    toggleHand(newState);
+  };
+
+  const handleSendMessage = (content: string, type = 'text') => {
+    // In a real implementation, this would send through socket
+    const message = {
+      id: `msg_${Date.now()}`,
+      participantId: 'current-user',
+      participantAlias: 'You',
+      content,
+      type,
+      timestamp: new Date().toISOString(),
+      isHost
+    };
+    setChatMessages(prev => [...prev, message]);
+  };
+
+  const handleParticipantAction = (participantId: string, action: string) => {
+    switch (action) {
+      case 'mute':
+        muteParticipant(participantId);
+        break;
+      case 'kick':
+        kickParticipant(participantId);
+        break;
+      case 'promote':
+        promoteToSpeaker(participantId);
+        break;
+    }
   };
 
   const handleEmergencyAlert = () => {
@@ -216,139 +274,260 @@ export const FlagshipLiveAudioSanctuary: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-purple-900/20 dark:via-blue-900/20 dark:to-indigo-900/20">
-      <div className="container mx-auto p-4 space-y-6">
-        {/* Header */}
-        <Card className="border-purple-200 shadow-lg">
-          <CardHeader className="pb-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="text-3xl">{session.emoji}</div>
-                <div>
-                  <CardTitle className="text-xl text-purple-800 dark:text-purple-200">
-                    {session.topic}
-                  </CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Hosted by {session.hostAlias} • {participants.length} participants
-                  </p>
-                </div>
+    <>
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-purple-900/20 dark:via-blue-900/20 dark:to-indigo-900/20">
+        <div className="container mx-auto p-4">
+          <div className={`grid gap-6 ${showChat ? 'lg:grid-cols-3' : 'lg:grid-cols-1'} transition-all duration-300`}>
+            
+            {/* Main Audio Interface */}
+            <div className={showChat ? 'lg:col-span-2' : 'lg:col-span-1'}>
+              <div className="space-y-6">
+                {/* Header */}
+                <Card className="border-purple-200 shadow-lg bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="text-4xl animate-pulse">{session.emoji}</div>
+                        <div>
+                          <CardTitle className="text-2xl text-purple-800 dark:text-purple-200 flex items-center gap-2">
+                            {session.topic}
+                            {isHost && <Crown className="h-5 w-5 text-yellow-500" />}
+                          </CardTitle>
+                          <p className="text-sm text-muted-foreground">
+                            Hosted by {session.hostAlias} • {participants.length} participants
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        <Badge variant={connectionQuality === 'excellent' ? 'default' : 'secondary'} className="animate-pulse">
+                          <Zap className="h-3 w-3 mr-1" />
+                          {connectionQuality}
+                        </Badge>
+                        {voiceModulation.enabled && (
+                          <Badge variant="outline" className="bg-purple-50 dark:bg-purple-900/50">
+                            <Sparkles className="h-3 w-3 mr-1" />
+                            {voiceModulation.voiceName}
+                          </Badge>
+                        )}
+                        {emergencyMode && (
+                          <Badge variant="destructive" className="animate-pulse">
+                            <AlertTriangle className="h-3 w-3 mr-1" />
+                            Emergency Mode
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </CardHeader>
+                </Card>
+
+                {/* Main Audio Controls */}
+                <Card className="border-purple-200 shadow-xl">
+                  <CardContent className="pt-8">
+                    <div className="flex justify-center space-x-6 mb-8">
+                      <Button
+                        size="lg"
+                        variant={isMuted ? "destructive" : "default"}
+                        onClick={toggleMicrophone}
+                        className="px-10 py-6 text-lg font-bold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                      >
+                        {isMuted ? <MicOff className="h-8 w-8 mr-4" /> : <Mic className="h-8 w-8 mr-4" />}
+                        {isMuted ? 'Unmute' : 'Mute'}
+                      </Button>
+                      
+                      <Button
+                        size="lg"
+                        variant={handRaised ? "default" : "outline"}
+                        onClick={handleToggleHand}
+                        className="px-6 py-6 shadow-lg hover:shadow-xl transition-all duration-300"
+                      >
+                        <Hand className={`h-6 w-6 mr-2 ${handRaised ? 'animate-bounce' : ''}`} />
+                        {handRaised ? 'Lower Hand' : 'Raise Hand'}
+                      </Button>
+                    </div>
+
+                    <div className="flex justify-center space-x-4 mb-8">
+                      <Button
+                        size="lg"
+                        variant="outline"
+                        onClick={() => setShowChat(!showChat)}
+                        className="px-6 py-4 shadow-md hover:shadow-lg transition-all"
+                      >
+                        <MessageSquare className="h-5 w-5 mr-2" />
+                        Chat ({chatMessages.length})
+                      </Button>
+
+                      <Button
+                        size="lg"
+                        variant="outline"
+                        onClick={() => setShowVoiceModal(true)}
+                        className="px-6 py-4 shadow-md hover:shadow-lg transition-all"
+                      >
+                        <Sparkles className="h-5 w-5 mr-2" />
+                        Voice Settings
+                      </Button>
+
+                      <Button
+                        size="lg"
+                        variant="destructive"
+                        onClick={handleLeave}
+                        className="px-6 py-4 shadow-md hover:shadow-lg transition-all"
+                      >
+                        <PhoneOff className="h-5 w-5 mr-2" />
+                        Leave
+                      </Button>
+                    </div>
+
+                    {/* Audio Quality Indicator */}
+                    <div className="flex items-center justify-center space-x-6 text-sm text-muted-foreground bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Volume2 className="h-4 w-4" />
+                        Audio: {audioStats.audioLevel}%
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Zap className="h-4 w-4" />
+                        Quality: {audioStats.networkQuality}/6
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        Latency: {audioStats.rtt}ms
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Participants Grid */}
+                <Card className="border-gray-200">
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Users className="h-5 w-5" />
+                      Participants ({participants.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {participants.map((participant) => (
+                        <Card key={participant.id} className="p-3 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700">
+                          <div className="flex flex-col items-center space-y-2">
+                            <Avatar className="h-12 w-12">
+                              <AvatarImage src={`/avatars/avatar-${participant.avatarIndex || 1}.svg`} />
+                              <AvatarFallback className="bg-gradient-to-br from-purple-400 to-indigo-400 text-white">
+                                {participant.alias?.substring(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="text-center">
+                              <p className="text-sm font-semibold truncate max-w-20">{participant.alias}</p>
+                              <div className="flex items-center justify-center space-x-1 mt-1">
+                                {participant.isHost && <Crown className="h-3 w-3 text-yellow-500" />}
+                                {participant.isModerator && <Shield className="h-3 w-3 text-blue-500" />}
+                                {participant.isMuted && <MicOff className="h-3 w-3 text-red-500" />}
+                                {participant.handRaised && <Hand className="h-3 w-3 text-orange-500 animate-bounce" />}
+                              </div>
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Emergency Section */}
+                <Card className="border-red-200 bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20">
+                  <CardContent className="pt-6">
+                    <div className="text-center space-y-4">
+                      <div className="flex justify-center space-x-4">
+                        <Button
+                          variant="destructive"
+                          onClick={handleEmergencyAlert}
+                          className="bg-red-600 hover:bg-red-700 shadow-lg"
+                          disabled={emergencyMode}
+                        >
+                          <AlertTriangle className="h-4 w-4 mr-2" />
+                          {emergencyMode ? 'Emergency Alert Sent' : 'Request Emergency Help'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowEmergencyModal(true)}
+                          className="border-red-300 text-red-700 hover:bg-red-50"
+                        >
+                          <Shield className="h-4 w-4 mr-2" />
+                          Safety Resources
+                        </Button>
+                      </div>
+                      <p className="text-xs text-red-600 dark:text-red-400">
+                        Use emergency features only in genuine crisis situations
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Quick Reactions */}
+                <Card className="border-indigo-200">
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Star className="h-5 w-5" />
+                      Quick Reactions
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex justify-center flex-wrap gap-3">
+                      {['👍', '❤️', '👏', '🤗', '💜', '🙏', '🎉', '✨'].map((emoji) => (
+                        <Button
+                          key={emoji}
+                          variant="outline"
+                          size="lg"
+                          onClick={() => sendEmojiReaction(emoji)}
+                          className="text-3xl h-14 w-14 p-0 hover:scale-110 transition-transform shadow-md"
+                        >
+                          {emoji}
+                        </Button>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-              
-              <div className="flex items-center space-x-2">
-                <Badge variant={connectionQuality === 'excellent' ? 'default' : 'secondary'}>
-                  {connectionQuality}
-                </Badge>
-                {voiceModulation.enabled && (
-                  <Badge variant="outline" className="bg-purple-50">
-                    <Sparkles className="h-3 w-3 mr-1" />
-                    Voice Modified
-                  </Badge>
-                )}
-                {emergencyMode && (
-                  <Badge variant="destructive">
-                    <AlertTriangle className="h-3 w-3 mr-1" />
-                    Emergency Mode
-                  </Badge>
-                )}
+            </div>
+
+            {/* Chat Sidebar */}
+            {showChat && (
+              <div className="lg:col-span-1">
+                <SanctuaryChat
+                  sessionId={sessionId || ''}
+                  currentUser={{
+                    id: 'current-user',
+                    alias: 'You',
+                    isHost,
+                    isModerator: false
+                  }}
+                  participants={participants}
+                  messages={chatMessages}
+                  onSendMessage={handleSendMessage}
+                  onParticipantAction={handleParticipantAction}
+                  emergencyMode={emergencyMode}
+                  className="h-[calc(100vh-2rem)] sticky top-4"
+                />
               </div>
-            </div>
-          </CardHeader>
-        </Card>
-
-        {/* Main Audio Controls */}
-        <Card className="border-purple-200">
-          <CardContent className="pt-6">
-            <div className="flex justify-center space-x-4 mb-6">
-              <Button
-                size="lg"
-                variant={isMuted ? "destructive" : "default"}
-                onClick={toggleMicrophone}
-                className="px-8 py-4 text-lg font-semibold"
-              >
-                {isMuted ? <MicOff className="h-6 w-6 mr-3" /> : <Mic className="h-6 w-6 mr-3" />}
-                {isMuted ? 'Unmute' : 'Mute'}
-              </Button>
-              
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => setShowChat(!showChat)}
-                className="px-6 py-4"
-              >
-                <MessageSquare className="h-5 w-5 mr-2" />
-                Chat
-              </Button>
-
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => {/* Voice settings modal */}}
-                className="px-6 py-4"
-              >
-                <Sparkles className="h-5 w-5 mr-2" />
-                Voice
-              </Button>
-
-              <Button
-                size="lg"
-                variant="destructive"
-                onClick={handleLeave}
-                className="px-6 py-4"
-              >
-                <PhoneOff className="h-5 w-5 mr-2" />
-                Leave
-              </Button>
-            </div>
-
-            {/* Audio Quality Indicator */}
-            <div className="flex items-center justify-center space-x-4 text-sm text-muted-foreground">
-              <span>Audio: {audioStats.audioLevel}%</span>
-              <span>Network: {audioStats.networkQuality}/6</span>
-              <span>Latency: {audioStats.rtt}ms</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Emergency Button */}
-        <Card className="border-red-200 bg-red-50/50 dark:bg-red-900/10">
-          <CardContent className="pt-4 text-center">
-            <Button
-              variant="destructive"
-              onClick={handleEmergencyAlert}
-              className="bg-red-600 hover:bg-red-700"
-              disabled={emergencyMode}
-            >
-              <AlertTriangle className="h-4 w-4 mr-2" />
-              {emergencyMode ? 'Emergency Alert Sent' : 'Request Emergency Help'}
-            </Button>
-            <p className="text-xs text-red-600 dark:text-red-400 mt-2">
-              Use only in genuine emergencies
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Quick Reactions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Quick Reactions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex justify-center space-x-3">
-              {['👍', '❤️', '👏', '🤗', '💜', '🙏'].map((emoji) => (
-                <Button
-                  key={emoji}
-                  variant="outline"
-                  size="lg"
-                  onClick={() => sendEmojiReaction(emoji)}
-                  className="text-2xl h-12 w-12 p-0"
-                >
-                  {emoji}
-                </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+            )}
+          </div>
+        </div>
       </div>
-    </div>
+
+      {/* Voice Modulation Modal */}
+      <VoiceModulationModal
+        isOpen={showVoiceModal}
+        onClose={() => setShowVoiceModal(false)}
+        currentVoice={{ id: voiceModulation.voiceId, name: voiceModulation.voiceName }}
+        onVoiceChange={handleVoiceChange}
+        isEnabled={voiceModulation.enabled}
+        onToggleEnabled={handleToggleVoiceModulation}
+      />
+
+      <EmergencyProtocols
+        sessionId={sessionId || ''}
+        isHost={isHost}
+        emergencyMode={emergencyMode}
+        onClose={() => setShowEmergencyModal(false)}
+      />
+    </>
   );
 };
