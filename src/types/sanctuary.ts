@@ -1,106 +1,74 @@
-// Sanctuary-specific types
+// Sanctuary-specific types and interfaces
+import type { User } from './index';
 
-export interface AIModerationLog {
-  id: string;
-  sessionId: string;
-  content: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  action: 'none' | 'warning' | 'mute' | 'kick' | 'ban';
-  timestamp: string;
-  moderatorId?: string;
-  resolved: boolean;
-}
-
-export interface SanctuaryAlert {
-  id: string;
-  type: 'crisis' | 'conflict' | 'spam' | 'inappropriate';
-  sessionId: string;
-  participantId: string;
-  message: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  timestamp: string;
-  resolved: boolean;
-}
-
-export interface ModerationAction {
-  id: string;
-  type: 'warning' | 'mute' | 'kick' | 'ban';
-  sessionId: string;
-  targetId: string;
-  moderatorId: string;
-  reason: string;
-  timestamp: string;
-  duration?: number;
-}
-
-export interface BreakoutRoom {
-  id: string;
-  name: string;
-  topic?: string;
-  currentParticipants: number;
-  maxParticipants: number;
-  createdAt: string;
-  isActive: boolean;
-  isPrivate: boolean;
-  hostId: string;
-  participants: string[];
-}
-
-export interface SessionRecording {
-  id: string;
-  sessionId: string;
-  startTime: string;
-  endTime?: string;
-  duration?: number;
-  fileUrl?: string;
-  transcriptUrl?: string;
-  processingStatus: 'pending' | 'processing' | 'completed' | 'failed';
-  isActive: boolean;
-}
-
-export interface LiveSanctuarySession {
+export interface Sanctuary {
   id: string;
   topic: string;
   description?: string;
   emoji?: string;
   hostId: string;
-  hostAlias: string;
-  createdAt: string;
-  startTime?: string;
+  hostAlias?: string;
+  participantCount: number;
+  maxParticipants?: number;
   isActive: boolean;
-  status?: 'pending' | 'active' | 'ended';
-  mode: 'public' | 'private' | 'invite-only';
-  participants: LiveParticipant[];
-  maxParticipants: number;
-  currentParticipants?: number;
-  estimatedDuration?: number;
+  allowAnonymous: boolean;
+  expiresAt: string;
+  createdAt: string;
+  updatedAt: string;
+  hostToken?: string;
+  inviteLink?: string;
   tags?: string[];
   language?: string;
-  expiresAt?: string;
-  allowAnonymous?: boolean;
-  recordingConsent?: boolean;
+  moderationLevel?: string;
+  status: 'scheduled' | 'active' | 'ended';
+}
+
+export interface SanctuaryParticipant {
+  id: string;
+  alias: string;
+  isHost: boolean;
+  isAnonymous: boolean;
+  joinedAt: string;
+  isMuted?: boolean;
+  micPermission?: 'granted' | 'denied' | 'pending';
+}
+
+export interface SanctuaryMessage {
+  id: string;
+  participantId: string;
+  participantAlias: string;
+  content: string;
+  timestamp: string;
+  type: "text" | "system" | "emoji-reaction";
+}
+
+// Live audio sanctuary types
+export interface LiveSanctuarySession extends Sanctuary {
+  audioOnly: boolean;
+  moderationEnabled: boolean;
+  emergencyContactEnabled: boolean;
+  scheduledDateTime?: string | Date;
+  startedAt?: string;
+  endedAt?: string;
+  estimatedDuration?: number;
+  participants?: LiveParticipant[];
+  session?: any; // For backward compatibility
+  hostAlias?: string;
   aiMonitoring?: boolean;
-  moderationLevel?: 'low' | 'medium' | 'high' | 'strict';
   emergencyProtocols?: boolean;
   isRecorded?: boolean;
-  hostToken?: string;
-  agoraChannelName?: string;
-  agoraToken?: string;
-  audioOnly?: boolean;
-  breakoutRooms?: any[];
-  moderationEnabled?: boolean;
-  emergencyContactEnabled?: boolean;
+  startTime?: string;
 }
 
 export interface LiveParticipant {
   id: string;
   alias: string;
-  avatarIndex?: number;
-  joinedAt: string;
   isHost: boolean;
-  isMuted: boolean;
   isModerator?: boolean;
+  isMuted: boolean;
   isBlocked?: boolean;
+  handRaised?: boolean;
+  joinedAt: string;
   audioLevel?: number;
   connectionStatus: 'connected' | 'connecting' | 'disconnected' | 'reconnecting';
   handRaised?: boolean;
@@ -120,17 +88,125 @@ export interface ChatParticipant {
 }
 
 export interface EmojiReaction {
-  id: string;
   emoji: string;
-  participantId: string;
   timestamp: string;
-  duration?: number;
 }
 
-// Socket service interface for real-time features
-export interface SocketService {
-  on(event: string, callback: Function): void;
-  off(event: string, callback?: Function): void;
-  emit(event: string, data?: any): void;
-  disconnect(): void;
+export interface BreakoutRoom {
+  id: string;
+  sessionId: string;
+  name: string;
+  participants: string[];
+  currentParticipants?: number;
+  maxParticipants: number;
+  isActive: boolean;
+  createdAt: string;
+  topic?: string;
+  facilitatorId?: string;
+}
+
+export interface SessionRecording {
+  id: string;
+  sessionId: string;
+  filename: string;
+  fileUrl: string;
+  duration: number;
+  processingStatus?: 'processing' | 'completed' | 'failed';
+  createdAt: string;
+  downloadUrl?: string;
+}
+
+export interface AIModerationLog {
+  id: string;
+  sessionId: string;
+  participantId: string;
+  content: string;
+  flaggedReason: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  action: 'none' | 'warning' | 'mute' | 'remove';
+  timestamp: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+}
+
+export interface SanctuaryInvitation {
+  id: string;
+  sessionId: string;
+  invitedBy: string;
+  invitedByAlias: string;
+  inviteToken: string;
+  message?: string;
+  status: 'pending' | 'accepted' | 'declined' | 'expired';
+  createdAt: string;
+  expiresAt: string;
+}
+
+// Session submission types
+export interface SanctuarySubmission {
+  id: string;
+  sessionId: string;
+  participantId: string;
+  participantAlias: string;
+  message: string;
+  timestamp: string;
+  approved?: boolean;
+  reviewedBy?: string;
+  reviewedAt?: string;
+}
+
+// Host dashboard types
+export interface HostDashboardData {
+  activeSessions: LiveSanctuarySession[];
+  totalParticipants: number;
+  averageSessionDuration: number;
+  recentActivity: SanctuaryMessage[];
+  moderationAlerts: AIModerationLog[];
+}
+
+// AI Moderation types
+export interface ModerationEvent {
+  id: string;
+  sessionId: string;
+  participantId: string;
+  type: 'text' | 'audio' | 'behavior';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  description: string;
+  timestamp: string;
+  resolved: boolean;
+  action?: 'warning' | 'mute' | 'remove' | 'ban';
+}
+
+export interface ModerationSettings {
+  enabled: boolean;
+  sensitivity: 'low' | 'medium' | 'high';
+  autoActions: {
+    warning: boolean;
+    mute: boolean;
+    remove: boolean;
+  };
+  keywords: string[];
+  allowedTopics: string[];
+}
+
+// Emergency protocols
+export interface EmergencyProtocol {
+  id: string;
+  name: string;
+  trigger: 'keyword' | 'ai_detection' | 'manual';
+  actions: string[];
+  enabled: boolean;
+  priority: 'low' | 'medium' | 'high' | 'critical';
+}
+
+export interface CrisisEvent {
+  id: string;
+  sessionId: string;
+  participantId: string;
+  type: 'suicidal_ideation' | 'self_harm' | 'violence_threat' | 'medical_emergency';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  description: string;
+  timestamp: string;
+  responders: string[];
+  resolved: boolean;
+  resolution?: string;
 }

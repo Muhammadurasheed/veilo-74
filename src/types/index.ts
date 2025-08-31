@@ -352,6 +352,8 @@ export interface ApiSanctuaryCreateRequest {
   emoji?: string;
   expireHours?: number;
   allowAnonymous?: boolean;
+  maxParticipants?: number;
+  audioOnly?: boolean;
 }
 
 export interface ApiSanctuaryJoinRequest {
@@ -455,8 +457,8 @@ export interface LiveSanctuarySession {
   description?: string;
   emoji?: string;
   hostId: string;
-  hostAlias: string;
-  participants: LiveSanctuaryParticipant[];
+  hostAlias?: string;
+  participants?: LiveSanctuaryParticipant[];
   participantCount: number;
   maxParticipants: number;
   audioOnly: boolean;
@@ -475,6 +477,7 @@ export interface LiveSanctuarySession {
   inviteLink: string;
   createdAt: string;
   updatedAt: string;
+  session?: any; // For backward compatibility
 }
 
 export interface LiveSanctuaryParticipant {

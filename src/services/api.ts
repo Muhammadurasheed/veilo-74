@@ -730,7 +730,22 @@ setAdminToken = (token: string) => {
   });
 };
 
-// Export main API instances
+// AnalyticsApi - missing from exports
+const AnalyticsApi = {
+  async getGlobalMetrics() {
+    return apiRequest('GET', '/api/admin/analytics/global');
+  },
+
+  async getExpertMetrics(expertId: string) {
+    return apiRequest('GET', `/api/admin/analytics/experts/${expertId}`);
+  },
+
+  async getPlatformOverview(timeframe = '7d') {
+    return apiRequest('GET', '/api/admin/analytics/overview', null, { params: { timeframe } });
+  }
+};
+
+// Export main API instances with all missing exports
 export { ExpertApi, SanctuaryApi, LiveSanctuaryApi, PostApi, SessionApi, GeminiApi, AppealApi, UserApi, AdminApi, AnalyticsApi, apiRequest, setAdminToken };
 
 // Export only type reference
