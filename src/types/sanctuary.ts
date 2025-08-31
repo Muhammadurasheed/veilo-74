@@ -105,7 +105,7 @@ export interface LiveParticipant {
   connectionStatus: 'connected' | 'connecting' | 'disconnected';
   handRaised?: boolean;
   speakingTime?: number;
-  reactions: EmojiReaction[];
+  reactions?: EmojiReaction[];
   isAnonymous?: boolean;
   micPermission?: 'granted' | 'denied' | 'pending';
 }

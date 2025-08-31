@@ -440,6 +440,7 @@ export interface CreateLiveSanctuaryRequest {
   allowAnonymous?: boolean;
   moderationEnabled?: boolean;
   emergencyContactEnabled?: boolean;
+  expireHours?: number;
   scheduledDateTime?: string;
   estimatedDuration?: number;
   tags?: string[];
@@ -483,6 +484,7 @@ export interface LiveSanctuaryParticipant {
   joinedAt: string;
   isMuted?: boolean;
   micPermission?: 'granted' | 'denied' | 'pending';
+  connectionStatus?: 'connected' | 'disconnected' | 'connecting';
 }
 
 export interface LiveSanctuaryInvitation {

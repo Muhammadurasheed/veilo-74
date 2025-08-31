@@ -619,15 +619,18 @@ const SanctuaryApi = {
     return apiRequest('POST', `/api/sanctuary/sessions/${sessionId}/submit`, { alias, message });
   },
 
-  async getSubmissions(sessionId: string, hostToken?: string) {
-    const headers: Record<string, string> = {};
-    if (hostToken) {
-      headers['x-host-token'] = hostToken;
+  async getSubmissions(sessionId?: string, hostToken?: string) {
+    if (sessionId) {
+      const headers: Record<string, string> = {};
+      if (hostToken) {
+        headers.authorization = `Bearer ${hostToken}`;
+      }
+      return apiRequest('GET', `/api/sanctuary/sessions/${sessionId}/submissions`, null, { 
+        headers,
+        params: hostToken ? { hostToken } : {}
+      });
     }
-    return apiRequest('GET', `/api/sanctuary/sessions/${sessionId}/submissions`, null, { 
-      headers,
-      params: hostToken ? { hostToken } : {}
-    });
+    return apiRequest('GET', '/api/sanctuary/submissions');
   }
 };
 
@@ -719,8 +722,23 @@ const AppealApi = {
   }
 };
 
+export const setAdminToken = (token: string) => {
+  localStorage.setItem('admin_token', token);
+  localStorage.setItem('token', token); 
+  localStorage.setItem('veilo-auth-token', token);
+  
+  // Set axios default header for all subsequent requests
+  api.defaults.headers.common['x-auth-token'] = token;
+  api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  
+  console.log('🔐 Admin token set:', { 
+    token: token.substring(0, 20) + '...', 
+    hasHeader: !!api.defaults.headers.common['x-auth-token'] 
+  });
+};
+
 // Export main API instances
-export { ExpertApi, SanctuaryApi, LiveSanctuaryApi, PostApi, SessionApi, GeminiApi, AppealApi, UserApi, AdminApi, AnalyticsApi, apiRequest };
+export { ExpertApi, SanctuaryApi, LiveSanctuaryApi, PostApi, SessionApi, GeminiApi, AppealApi, UserApi, AdminApi, AnalyticsApi, apiRequest, setAdminToken };
 
 // Export only type reference
 export type { ApiResponse } from '@/types';

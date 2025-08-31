@@ -21,7 +21,13 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (credentials: { email: string; password: string }) => Promise<boolean>;
-  register: (userData: { email?: string; password?: string; alias?: string; realName?: string; preferredAlias?: string }) => Promise<boolean>;
+  register: (userData: { 
+    email?: string; 
+    password?: string; 
+    alias?: string; 
+    realName?: string; 
+    preferredAlias?: string;
+  }) => Promise<boolean>;
   logout: () => void;
   refreshToken: () => Promise<boolean>;
   updateProfile: (updates: Partial<AuthUser>) => Promise<boolean>;
