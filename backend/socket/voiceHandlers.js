@@ -4,8 +4,8 @@ const RedisSessionManager = require('../services/redisSessionManager');
 class VoiceHandlers {
   constructor(io) {
     this.io = io;
-    this.voiceService = new ElevenLabsVoiceService();
-    this.sessionManager = new RedisSessionManager();
+    this.voiceService = ElevenLabsVoiceService;
+    this.sessionManager = RedisSessionManager;
   }
 
   // Initialize voice-related socket handlers

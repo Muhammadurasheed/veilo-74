@@ -5,7 +5,7 @@ class ModerationHandlers {
   constructor(io) {
     this.io = io;
     this.moderationService = new AIModerationService();
-    this.sessionManager = new RedisSessionManager();
+    this.sessionManager = RedisSessionManager;
   }
 
   // Initialize moderation-related socket handlers
