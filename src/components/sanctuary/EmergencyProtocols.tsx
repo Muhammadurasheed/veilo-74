@@ -23,8 +23,11 @@ import {
 
 interface EmergencyProtocolsProps {
   sessionId: string;
+  isHost?: boolean;
+  emergencyMode?: boolean;
   onEmergencyAlert?: (alertType: string, message: string) => void;
   onContactModerator?: () => void;
+  onClose?: () => void;
   className?: string;
 }
 
