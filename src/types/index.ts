@@ -440,7 +440,6 @@ export interface CreateLiveSanctuaryRequest {
   allowAnonymous?: boolean;
   moderationEnabled?: boolean;
   emergencyContactEnabled?: boolean;
-  expireHours?: number;
   scheduledDateTime?: string;
   estimatedDuration?: number;
   tags?: string[];

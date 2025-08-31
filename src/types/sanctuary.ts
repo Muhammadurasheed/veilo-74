@@ -102,10 +102,21 @@ export interface LiveParticipant {
   isModerator?: boolean;
   isBlocked?: boolean;
   audioLevel?: number;
-  connectionStatus?: 'connected' | 'connecting' | 'disconnected';
+  connectionStatus: 'connected' | 'connecting' | 'disconnected';
   handRaised?: boolean;
   speakingTime?: number;
   reactions: EmojiReaction[];
+  isAnonymous?: boolean;
+  micPermission?: 'granted' | 'denied' | 'pending';
+}
+
+export interface ChatParticipant {
+  id: string;
+  alias: string;
+  isHost: boolean;
+  isAnonymous: boolean;
+  joinedAt: string;
+  connectionStatus: 'connected' | 'connecting' | 'disconnected';
 }
 
 export interface EmojiReaction {
@@ -119,6 +130,7 @@ export interface EmojiReaction {
 // Socket service interface for real-time features
 export interface SocketService {
   on(event: string, callback: Function): void;
+  off(event: string, callback?: Function): void;
   emit(event: string, data?: any): void;
   disconnect(): void;
 }

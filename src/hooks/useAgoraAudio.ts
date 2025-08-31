@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
 
 interface AgoraConfig {
-  sessionId: string;
+  sessionId?: string;
   uid?: string | number;
 }
 

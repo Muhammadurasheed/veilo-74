@@ -327,8 +327,8 @@ const ExpertApi = {
   }
 };
 
-// Admin API methods
-const AdminApi = {
+// Admin API methods  
+const AdminApi: AdminApiType = {
   async login(credentials: { email: string; password: string }) {
     console.log('🔐 AdminApi.login called with:', { email: credentials.email, hasPassword: !!credentials.password });
     
