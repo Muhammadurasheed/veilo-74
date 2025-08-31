@@ -1,6 +1,8 @@
 const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const VoiceHandlers = require('./voiceHandlers');
+const ModerationHandlers = require('./moderationHandlers');
 
 let io;
 
@@ -79,8 +81,16 @@ const initializeSocket = (server) => {
     }
   });
 
+  // Initialize specialized handlers
+  const voiceHandlers = new VoiceHandlers(io);
+  const moderationHandlers = new ModerationHandlers(io);
+
   io.on('connection', (socket) => {
     console.log(`🔌 User connected: ${socket.userId} (${socket.userAlias || 'Anonymous'}) - Role: ${socket.userRole || 'unknown'}`);
+
+    // Initialize voice and moderation handlers for this socket
+    voiceHandlers.initializeHandlers(socket);
+    moderationHandlers.initializeHandlers(socket);
 
     // Handle joining chat sessions
     socket.on('join_chat', async (data) => {
